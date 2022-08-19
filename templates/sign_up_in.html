@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<title>Sign Up OR Sign In</title>
+<style>
+    .turbo-flash{
+     animation:fadeout0.5s 1;
+    -webkit-animation:fadeout 0.5s 1;
+    animation-fill-mode: forwards;
+
+    animation-delay:2s;
+    -webkit-animation-delay:1s; /* Safari and Chrome */
+    -webkit-animation-fill-mode: forwards;
+
+}
+
+@keyframes fadeout{
+    from {opacity :1;}
+    to {opacity :0;}
+}
+
+@-webkit-keyframes fadeout{
+    from {opacity :1;}
+    to {opacity :0;}
+}
+</style>
+
+    {{ turbo() }}
+</head>
+<body>
+
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<h1>Sign Up Form</h1>
+<form name="signup_form" method="POST">
+    <div>
+        {{ signup.csrf_token }}
+        {{ signup.name.label.text }}: {{ signup.name }}
+        {{ signup.email.label.text }}: {{ signup.email }}
+        {{ signup.password.label.text }}: {{ signup.password }}
+        {{ signup.confirm_password.label.text }}: {{ signup.confirm_password }}
+        {{ signup.signup }}
+    </div>
+</form>
+
+<br>
+<br>
+
+<h1>Sign In Form</h1>
+<form name="signin_form" method="POST">
+    <div>
+        {{ signin.csrf_token }}
+        {{ signin.email.label.text }}: {{ signin.email }}
+        {{ signin.password.label.text }}: {{ signin.password }}
+        {{ signin.signin }}
+    </div>
+
+    <div class="form-text text-danger" id="name_error">{{ name_error }}</div>
+</form>
+{% endblock %}
+
+
+</body>
+</html>

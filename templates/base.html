@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+  <head>
+    {{ turbo() }}
+  </head>
+  <body>
+    <div class="container">
+      <h1>Sign Up Login Page using Turbo</h1>
+      <div id="alert">
+        {% include 'alert.html' %}
+      </div>
+      {% block content %}{% endblock %}
+    </div>
+  </body>
+</html>
