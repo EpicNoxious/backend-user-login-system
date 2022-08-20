@@ -3,12 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <title>Alert</title>
+<style>
+  .flashes li {
+    color: red;
+    list-style: none;
+    font-weight: 500;
+    }
+</style>
 </head>
 <body>
 {% if get_flashed_messages() %}
   {% for message in get_flashed_messages() %}
     <div class="alert alert-warning" role="alert">
-      {{ message }}
+
+    <ul class="flashes">
+      <li>{{ message }}</li>
+    </ul>
+
     </div>
   {% endfor %}
 {% endif %}

@@ -3,6 +3,10 @@ from wtforms.validators import DataRequired, Email
 from wtforms import StringField, SubmitField, PasswordField
 
 
+class GetStarted(FlaskForm):
+    begin = SubmitField("Get Started")
+
+
 class SignUp(FlaskForm):
     name = StringField("Name", validators=[DataRequired()])
     email = StringField("Email", validators=[DataRequired(), Email()])
@@ -15,3 +19,7 @@ class SignIn(FlaskForm):
     email = StringField("Email", validators=[DataRequired(), Email()])
     password = PasswordField("Password", validators=[DataRequired()])
     signin = SubmitField("Sign In")
+
+
+class SignOut(FlaskForm):
+    signout = SubmitField("Log Out")

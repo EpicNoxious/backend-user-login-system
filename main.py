@@ -1,7 +1,10 @@
-from flask import Flask, render_template, request, flash
+import time
+from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, session
 from pymongo import MongoClient
-from forms import SignUp, SignIn
+from forms import GetStarted, SignUp, SignIn, SignOut
+from functools import wraps
 from turbo_flask import Turbo
+import uuid
 
 app = Flask(__name__)
 turbo = Turbo(app)
@@ -12,13 +15,45 @@ db = client['practice']
 users = db.login_system_data
 
 
+class User:
+    def start_session(self, user):
+        del user['password']
+        session['logged_in'] = True
+        session['user'] = user
+        return jsonify(user), 200
+
+    def signup(self, user_data):
+        user = {
+            "_id": user_data['_id'],
+            "name": user_data['name'],
+            "email": user_data['email'],
+            "password": user_data['password']
+        }
+        users.insert_one(user)
+        flash("")
+        return self.start_session(user)
+
+    def signin(self, user_data):
+        user = {
+            "_id": user_data['_id'],
+            "name": user_data['name'],
+            "email": user_data['email'],
+            "password": user_data['password']
+        }
+        return self.start_session(user)
+
+
+    def signout(self):
+        session.clear()
+        return redirect('/')
+
+
 @app.after_request
 def after_request(response):
     # if the response has the turbo-stream content type, then append one more
     # stream with the contents of the alert section of the page
     if response.headers['Content-Type'].startswith(
             'text/vnd.turbo-stream.html'):
-        print(1)
         response.response.append(turbo.update(
             render_template('alert.html'), 'alert').encode())
         if response.content_length:
@@ -26,8 +61,27 @@ def after_request(response):
     return response
 
 
+def login_required(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        if 'logged_in' in session:
+            return f(*args, **kwargs)
+        else:
+            return redirect("/")
+
+    return wrap
+
+
 @app.route("/", methods=['GET', 'POST'])
 def index():
+    begin = GetStarted()
+    if begin.validate_on_submit():
+        return redirect(url_for('sign_up_in'))
+    return render_template('index.html', begin=begin)
+
+
+@app.route("/register", methods=['GET', 'POST'])
+def sign_up_in():
     signup = SignUp()
     signin = SignIn()
     name_error = ''
@@ -46,9 +100,16 @@ def index():
             flash("Passwords don't match")
 
         else:
-            dict = {'name': name, 'email': email, 'password': password}
-            users.insert_one(dict)
-            flash("User Added")
+            user_data = {
+                '_id': uuid.uuid4().hex,
+                 'name': name,
+                 'email': email,
+                 'password': password
+                 }
+            user = User()
+            user.signup(user_data)
+            time.sleep(1)
+            return redirect(url_for('success'))
 
         if turbo.can_stream():
             return turbo.stream(turbo.update(name_error, 'name_error'))
@@ -57,18 +118,41 @@ def index():
         print('Sign In')
         email = request.form['email']
         password = request.form['password']
-        data = users.find_one({'email': email})
-        if data is None:
+        user_data = users.find_one({'email': email})
+        if user_data is None:
             flash("No such email exist")
-        elif password != data['password']:
+        elif password != user_data['password']:
             flash("Incorrect Password")
         else:
-            flash("User Logged In")
+            user = User()
+            user.signin(user_data)
+            time.sleep(1)
+            return redirect(url_for('success'))
 
         if turbo.can_stream():
             return turbo.stream(turbo.update(name_error, 'name_error'))
 
+
+
     return render_template("sign_up_in.html", signup=signup, signin=signin)
+
+
+@app.route("/success", methods=['GET', 'POST'])
+@login_required
+def success():
+    signout = SignOut()
+    user = User()
+    if signout.validate_on_submit():
+        user.signout()
+        time.sleep(1)
+        return redirect(url_for('index'))
+    return render_template('success.html', signout=signout)
+
+
+@app.route("/signout", methods=['GET', 'POST'])
+def signout():
+    user = User()
+    return user.signout()
 
 
 if __name__ == "__main__":
